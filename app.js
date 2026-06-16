@@ -756,6 +756,23 @@ function ThreeViewer({
   const dirLight2Ref = useRef(null);
   const pointLightRef = useRef(null);
 
+  // Refs to prevent stale closure in animate loop
+  const rotationEnabledRef = useRef(rotationEnabled);
+  const rotationSpeedRef = useRef(rotationSpeed);
+  const cinematicModeRef = useRef(cinematicMode);
+
+  useEffect(() => {
+    rotationEnabledRef.current = rotationEnabled;
+  }, [rotationEnabled]);
+
+  useEffect(() => {
+    rotationSpeedRef.current = rotationSpeed;
+  }, [rotationSpeed]);
+
+  useEffect(() => {
+    cinematicModeRef.current = cinematicMode;
+  }, [cinematicMode]);
+
   // Initialize ThreeJS environment
   useEffect(() => {
     if (!containerRef.current) return;
@@ -850,8 +867,8 @@ function ThreeViewer({
       }
 
       // Rotate model OR rotate camera in cinematic mode
-      if (!cinematicMode && rotationEnabled && currentModelRef.current) {
-        currentModelRef.current.rotation.y += rotationSpeed * 0.0015;
+      if (!cinematicModeRef.current && rotationEnabledRef.current && currentModelRef.current) {
+        currentModelRef.current.rotation.y += rotationSpeedRef.current * 0.0015;
       }
 
       // Dynamic Orbit Light for cinematic touch
@@ -1260,3 +1277,8 @@ function ThreeViewer({
 
   return <div className="three-canvas-container" ref={containerRef}></div>;
 }
+
+// Mount React App - resolves race condition in browser CDN loaders
+const rootElement = document.getElementById('root');
+const root = ReactDOM.createRoot(rootElement);
+root.render(<App />);
