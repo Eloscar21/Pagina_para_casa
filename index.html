@@ -18,6 +18,16 @@
   <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script>
+    // Register custom Babel preset for classic React runtime (React.createElement)
+    // to avoid ES module 'import' statements that fail in non-module scripts.
+    Babel.registerPreset("react-classic", {
+      presets: [
+        [Babel.availablePresets["react"], { runtime: "classic" }],
+        Babel.availablePresets["env"]
+      ]
+    });
+  </script>
 
   <!-- Lucide Icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
@@ -42,8 +52,7 @@
   <div id="root"></div>
 
   <!-- Load Babel JSX React App components -->
-  <script type="text/babel" src="app.js"></script>
-
+  <script type="text/babel" data-presets="react-classic" src="app.js"></script>
 
 </body>
 </html>
