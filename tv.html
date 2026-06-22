@@ -1,0 +1,759 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Blender Web Preview - Studio 3D</title>
+  <style>
+    /* ===== SMART TV COMPATIBLE CSS ===== */
+    /* No CSS variables, no backdrop-filter, no complex gradients */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    @font-face {
+      font-family: 'TVFont';
+      src: local('Segoe UI'), local('Arial'), local('Helvetica');
+    }
+
+    body {
+      background: #0a0b12;
+      color: #f8fafc;
+      font-family: 'TVFont', Arial, Helvetica, sans-serif;
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Header */
+    .tv-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 32px;
+      background: #0d0f1a;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      flex-shrink: 0;
+    }
+
+    .tv-logo {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .tv-logo-icon {
+      background: linear-gradient(135deg, #6366f1, #a855f7);
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-weight: 800;
+      font-size: 1.5rem;
+    }
+
+    .tv-logo-title {
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .tv-logo-subtitle {
+      font-size: 0.8rem;
+      color: #06b6d4;
+      text-transform: uppercase;
+      letter-spacing: 3px;
+      font-weight: 600;
+    }
+
+    .tv-status {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 18px;
+      border-radius: 30px;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      background: rgba(16, 185, 129, 0.08);
+      color: #10b981;
+      font-size: 0.9rem;
+      font-weight: 600;
+    }
+
+    .tv-status-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #10b981;
+    }
+
+    /* Main content */
+    .tv-main {
+      flex: 1;
+      display: flex;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* 3D Canvas area */
+    .tv-canvas-wrap {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      background: #0b0d19;
+    }
+
+    #tv-canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    /* Side info panel */
+    .tv-sidebar {
+      width: 320px;
+      background: rgba(16, 18, 35, 0.9);
+      border-left: 1px solid rgba(255,255,255,0.07);
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      overflow-y: auto;
+      flex-shrink: 0;
+    }
+
+    .tv-section-title {
+      font-size: 0.85rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: #94a3b8;
+      border-bottom: 1px solid rgba(255,255,255,0.07);
+      padding-bottom: 10px;
+    }
+
+    .tv-info-card {
+      padding: 14px;
+      border-radius: 10px;
+      background: rgba(0,0,0,0.2);
+      border: 1px solid rgba(255,255,255,0.06);
+    }
+
+    .tv-info-label {
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      color: #64748b;
+      margin-bottom: 4px;
+    }
+
+    .tv-info-value {
+      font-size: 1rem;
+      font-weight: 700;
+      color: #f8fafc;
+    }
+
+    .tv-info-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    /* Control buttons */
+    .tv-controls {
+      position: absolute;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 12px;
+      padding: 10px 20px;
+      background: rgba(16, 18, 35, 0.85);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 16px;
+    }
+
+    .tv-btn {
+      width: 44px;
+      height: 44px;
+      border-radius: 10px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+      color: #94a3b8;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 1.2rem;
+      transition: all 0.2s;
+    }
+
+    .tv-btn:hover, .tv-btn:focus {
+      background: rgba(99, 102, 241, 0.15);
+      border-color: #6366f1;
+      color: #fff;
+      outline: none;
+    }
+
+    .tv-btn.active {
+      background: #6366f1;
+      border-color: #6366f1;
+      color: #fff;
+    }
+
+    /* Sample models grid */
+    .tv-samples {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .tv-sample-btn {
+      padding: 12px 16px;
+      border-radius: 10px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.07);
+      color: #94a3b8;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      text-align: left;
+      transition: all 0.2s;
+    }
+
+    .tv-sample-btn:hover, .tv-sample-btn:focus {
+      background: rgba(99, 102, 241, 0.1);
+      border-color: #6366f1;
+      color: #fff;
+      outline: none;
+    }
+
+    .tv-sample-btn.selected {
+      background: rgba(99, 102, 241, 0.15);
+      border-color: #6366f1;
+      color: #fff;
+    }
+
+    /* Color selection */
+    .tv-color-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .tv-color-swatch {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      border: 2px solid rgba(255,255,255,0.1);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .tv-color-swatch:hover, .tv-color-swatch:focus {
+      border-color: #fff;
+      transform: scale(1.1);
+      outline: none;
+    }
+
+    .tv-color-swatch.selected {
+      border-color: #06b6d4;
+      box-shadow: 0 0 10px rgba(6, 182, 212, 0.5);
+    }
+
+    /* IP display */
+    .tv-ip-banner {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      padding: 8px 16px;
+      border-radius: 10px;
+      background: rgba(99, 102, 241, 0.15);
+      border: 1px solid rgba(99, 102, 241, 0.3);
+      color: #a5b4fc;
+      font-size: 0.8rem;
+      font-weight: 600;
+      z-index: 5;
+    }
+
+    /* Loading state */
+    .tv-loading {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+      color: #94a3b8;
+      font-size: 1.1rem;
+      font-weight: 600;
+    }
+
+    /* Keyboard nav highlight */
+    *:focus-visible {
+      outline: 2px solid #6366f1;
+      outline-offset: 2px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <div class="tv-header">
+    <div class="tv-logo">
+      <div class="tv-logo-icon">B</div>
+      <div>
+        <div class="tv-logo-title">Blender Web Preview</div>
+        <div class="tv-logo-subtitle">Studio 3D</div>
+      </div>
+    </div>
+    <div class="tv-status">
+      <div class="tv-status-dot"></div>
+      <span id="tv-status-text">Muestra Procedural</span>
+    </div>
+  </div>
+
+  <!-- Main -->
+  <div class="tv-main">
+    <!-- Canvas -->
+    <div class="tv-canvas-wrap">
+      <canvas id="tv-canvas"></canvas>
+
+      <!-- Bottom controls -->
+      <div class="tv-controls">
+        <button class="tv-btn active" id="btn-rotate" title="Rotación" tabindex="1">&#x21BB;</button>
+        <button class="tv-btn" id="btn-wireframe" title="Wireframe" tabindex="2">&#x25A1;</button>
+        <button class="tv-btn" id="btn-grid" title="Cuadrícula" tabindex="3">&#x23F9;</button>
+        <button class="tv-btn" id="btn-reset" title="Centrar" tabindex="4">&#x2316;</button>
+      </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="tv-sidebar">
+      <div class="tv-section-title">&#x1F4E6; Modelos de Muestra</div>
+      <div class="tv-samples">
+        <button class="tv-sample-btn selected" data-model="torusKnot" tabindex="10">&#x267E; Nudo Toroidal</button>
+        <button class="tv-sample-btn" data-model="sphere" tabindex="11">&#x25CF; Esfera</button>
+        <button class="tv-sample-btn" data-model="torus" tabindex="12">&#x25EF; Toroide</button>
+        <button class="tv-sample-btn" data-model="box" tabindex="13">&#x25A0; Caja</button>
+      </div>
+
+      <div class="tv-section-title">&#x1F3A8; Color del Modelo</div>
+      <div class="tv-color-row" id="color-palette">
+        <div class="tv-color-swatch selected" data-color="#6366f1" style="background:#6366f1" tabindex="20"></div>
+        <div class="tv-color-swatch" data-color="#a855f7" style="background:#a855f7" tabindex="21"></div>
+        <div class="tv-color-swatch" data-color="#06b6d4" style="background:#06b6d4" tabindex="22"></div>
+        <div class="tv-color-swatch" data-color="#f43f5e" style="background:#f43f5e" tabindex="23"></div>
+        <div class="tv-color-swatch" data-color="#10b981" style="background:#10b981" tabindex="24"></div>
+        <div class="tv-color-swatch" data-color="#f59e0b" style="background:#f59e0b" tabindex="25"></div>
+        <div class="tv-color-swatch" data-color="#ffffff" style="background:#ffffff" tabindex="26"></div>
+        <div class="tv-color-swatch" data-color="#ec4899" style="background:#ec4899" tabindex="27"></div>
+      </div>
+
+      <div class="tv-section-title">&#x2139; Información del Modelo</div>
+      <div class="tv-info-grid">
+        <div class="tv-info-card">
+          <div class="tv-info-label">Modelo</div>
+          <div class="tv-info-value" id="info-name">Nudo Toroidal</div>
+        </div>
+        <div class="tv-info-card">
+          <div class="tv-info-label">Formato</div>
+          <div class="tv-info-value" id="info-format">Procedural</div>
+        </div>
+        <div class="tv-info-card">
+          <div class="tv-info-label">Vértices</div>
+          <div class="tv-info-value" id="info-verts">—</div>
+        </div>
+      </div>
+
+      <div class="tv-section-title">&#x2328; Controles</div>
+      <div class="tv-info-grid">
+        <div class="tv-info-card">
+          <div class="tv-info-label">Navegación</div>
+          <div class="tv-info-value" style="font-size:0.85rem;font-weight:500;color:#94a3b8">
+            Usa las flechas ← → del control remoto para seleccionar modelos y colores.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ===== SMART TV COMPATIBLE 3D RENDERER =====
+    // Uses Canvas 2D (no WebGL required) with wireframe 3D projection
+
+    var canvas = document.getElementById('tv-canvas');
+    var ctx = canvas.getContext('2d');
+
+    // State
+    var currentModel = 'torusKnot';
+    var modelColor = '#6366f1';
+    var rotating = true;
+    var wireframeMode = false;
+    var showGrid = false;
+    var angleX = 0.3;
+    var angleY = 0;
+    var angleZ = 0;
+
+    // Resize canvas
+    function resizeCanvas() {
+      var parent = canvas.parentElement;
+      canvas.width = parent.clientWidth;
+      canvas.height = parent.clientHeight;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    // 3D Math helpers
+    function rotateX(p, a) {
+      var c = Math.cos(a), s = Math.sin(a);
+      return [p[0], p[1]*c - p[2]*s, p[1]*s + p[2]*c];
+    }
+    function rotateY(p, a) {
+      var c = Math.cos(a), s = Math.sin(a);
+      return [p[0]*c + p[2]*s, p[1], -p[0]*s + p[2]*c];
+    }
+    function rotateZ(p, a) {
+      var c = Math.cos(a), s = Math.sin(a);
+      return [p[0]*c - p[1]*s, p[0]*s + p[1]*c, p[2]];
+    }
+
+    function project(p) {
+      var fov = 400;
+      var z = p[2] + 5;
+      if (z < 0.1) z = 0.1;
+      var scale = fov / z;
+      return [canvas.width/2 + p[0]*scale, canvas.height/2 - p[1]*scale, z];
+    }
+
+    // Generate model vertices and edges
+    function generateBox() {
+      var s = 1;
+      var v = [
+        [-s,-s,-s],[s,-s,-s],[s,s,-s],[-s,s,-s],
+        [-s,-s,s],[s,-s,s],[s,s,s],[-s,s,s]
+      ];
+      var e = [
+        [0,1],[1,2],[2,3],[3,0],
+        [4,5],[5,6],[6,7],[7,4],
+        [0,4],[1,5],[2,6],[3,7]
+      ];
+      var f = [
+        [0,1,2,3],[4,5,6,7],[0,1,5,4],[2,3,7,6],[0,3,7,4],[1,2,6,5]
+      ];
+      return {vertices: v, edges: e, faces: f, name: 'Caja'};
+    }
+
+    function generateSphere(res) {
+      res = res || 16;
+      var v = [];
+      var e = [];
+      var f = [];
+      for (var i = 0; i <= res; i++) {
+        var lat = Math.PI * i / res - Math.PI/2;
+        for (var j = 0; j <= res; j++) {
+          var lon = 2 * Math.PI * j / res;
+          v.push([
+            1.2 * Math.cos(lat) * Math.cos(lon),
+            1.2 * Math.sin(lat),
+            1.2 * Math.cos(lat) * Math.sin(lon)
+          ]);
+        }
+      }
+      for (var i = 0; i < res; i++) {
+        for (var j = 0; j < res; j++) {
+          var a = i * (res+1) + j;
+          var b = a + 1;
+          var c = a + res + 1;
+          var d = c + 1;
+          e.push([a, b]);
+          e.push([a, c]);
+          if (i === res - 1) e.push([c, d]);
+          if (j === res - 1) e.push([b, d]);
+          f.push([a, b, d, c]);
+        }
+      }
+      return {vertices: v, edges: e, faces: f, name: 'Esfera'};
+    }
+
+    function generateTorus(R, r, seg1, seg2) {
+      R = R || 1.0;
+      r = r || 0.4;
+      seg1 = seg1 || 24;
+      seg2 = seg2 || 12;
+      var v = [];
+      var e = [];
+      var f = [];
+      for (var i = 0; i <= seg1; i++) {
+        var theta = 2 * Math.PI * i / seg1;
+        for (var j = 0; j <= seg2; j++) {
+          var phi = 2 * Math.PI * j / seg2;
+          v.push([
+            (R + r * Math.cos(phi)) * Math.cos(theta),
+            r * Math.sin(phi),
+            (R + r * Math.cos(phi)) * Math.sin(theta)
+          ]);
+        }
+      }
+      for (var i = 0; i < seg1; i++) {
+        for (var j = 0; j < seg2; j++) {
+          var a = i * (seg2+1) + j;
+          var b = a + 1;
+          var c = a + seg2 + 1;
+          var d = c + 1;
+          e.push([a, b]);
+          e.push([a, c]);
+          f.push([a, b, d, c]);
+        }
+      }
+      return {vertices: v, edges: e, faces: f, name: 'Toroide'};
+    }
+
+    function generateTorusKnot(p1, q1, tubeSeg, radSeg) {
+      p1 = p1 || 2;
+      q1 = q1 || 3;
+      tubeSeg = tubeSeg || 100;
+      radSeg = radSeg || 8;
+      var radius = 1.0;
+      var tube = 0.3;
+      var v = [];
+      var e = [];
+      var f = [];
+
+      for (var i = 0; i <= tubeSeg; i++) {
+        var u = i / tubeSeg * 2 * Math.PI * p1;
+        var cu = Math.cos(u);
+        var su = Math.sin(u);
+        var quOverP = q1 / p1 * u;
+        var cs = Math.cos(quOverP);
+
+        var cx = (2 + cs) * 0.5 * cu;
+        var cy = (2 + cs) * 0.5 * su;
+        var cz = Math.sin(quOverP) * 0.5;
+
+        // Compute tangent and normal for tube circle
+        var u2 = (i + 1) / tubeSeg * 2 * Math.PI * p1;
+        var cu2 = Math.cos(u2);
+        var su2 = Math.sin(u2);
+        var cs2 = Math.cos(q1/p1*u2);
+        var tx = (2+cs2)*0.5*cu2 - cx;
+        var ty = (2+cs2)*0.5*su2 - cy;
+        var tz = Math.sin(q1/p1*u2)*0.5 - cz;
+        var tl = Math.sqrt(tx*tx+ty*ty+tz*tz) || 1;
+        tx/=tl; ty/=tl; tz/=tl;
+
+        // Arbitrary normal
+        var nx = -su, ny = cu, nz = 0;
+        var dot = nx*tx+ny*ty+nz*tz;
+        nx -= dot*tx; ny -= dot*ty; nz -= dot*tz;
+        var nl = Math.sqrt(nx*nx+ny*ny+nz*nz) || 1;
+        nx/=nl; ny/=nl; nz/=nl;
+
+        var bx = ty*nz-tz*ny, by = tz*nx-tx*nz, bz = tx*ny-ty*nx;
+
+        for (var j = 0; j <= radSeg; j++) {
+          var angle = 2 * Math.PI * j / radSeg;
+          var cosA = Math.cos(angle), sinA = Math.sin(angle);
+          v.push([
+            cx + tube*(cosA*nx + sinA*bx),
+            cy + tube*(cosA*ny + sinA*by),
+            cz + tube*(cosA*nz + sinA*bz)
+          ]);
+        }
+      }
+
+      for (var i = 0; i < tubeSeg; i++) {
+        for (var j = 0; j < radSeg; j++) {
+          var a = i * (radSeg+1) + j;
+          var b = a + 1;
+          var c = a + radSeg + 1;
+          var d = c + 1;
+          e.push([a, b]);
+          e.push([a, c]);
+          f.push([a, b, d, c]);
+        }
+      }
+      return {vertices: v, edges: e, faces: f, name: 'Nudo Toroidal'};
+    }
+
+    function getModel(type) {
+      switch(type) {
+        case 'box': return generateBox();
+        case 'sphere': return generateSphere(14);
+        case 'torus': return generateTorus();
+        case 'torusKnot': default: return generateTorusKnot();
+      }
+    }
+
+    var model = getModel(currentModel);
+
+    // Parse hex color to RGB
+    function hexToRgb(hex) {
+      var r = parseInt(hex.slice(1,3), 16);
+      var g = parseInt(hex.slice(3,5), 16);
+      var b = parseInt(hex.slice(5,7), 16);
+      return [r, g, b];
+    }
+
+    // Draw grid
+    function drawGrid() {
+      if (!showGrid) return;
+      ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+      ctx.lineWidth = 1;
+      for (var i = -5; i <= 5; i++) {
+        var p1 = project(rotateY(rotateX([i, -1.5, -5], angleX), angleY));
+        var p2 = project(rotateY(rotateX([i, -1.5, 5], angleX), angleY));
+        ctx.beginPath();
+        ctx.moveTo(p1[0], p1[1]);
+        ctx.lineTo(p2[0], p2[1]);
+        ctx.stroke();
+
+        p1 = project(rotateY(rotateX([-5, -1.5, i], angleX), angleY));
+        p2 = project(rotateY(rotateX([5, -1.5, i], angleX), angleY));
+        ctx.beginPath();
+        ctx.moveTo(p1[0], p1[1]);
+        ctx.lineTo(p2[0], p2[1]);
+        ctx.stroke();
+      }
+    }
+
+    // Main draw
+    function draw() {
+      ctx.fillStyle = '#0b0d19';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      drawGrid();
+
+      var rgb = hexToRgb(modelColor);
+      var verts = model.vertices;
+      var projected = [];
+
+      for (var i = 0; i < verts.length; i++) {
+        var p = verts[i];
+        p = rotateX(p, angleX);
+        p = rotateY(p, angleY);
+        projected.push(project(p));
+      }
+
+      if (!wireframeMode && model.faces) {
+        // Sort faces by average z (painter's algorithm)
+        var facesWithZ = [];
+        for (var i = 0; i < model.faces.length; i++) {
+          var face = model.faces[i];
+          var avgZ = 0;
+          for (var j = 0; j < face.length; j++) {
+            avgZ += projected[face[j]][2];
+          }
+          avgZ /= face.length;
+          facesWithZ.push({face: face, z: avgZ});
+        }
+        facesWithZ.sort(function(a, b) { return b.z - a.z; });
+
+        for (var i = 0; i < facesWithZ.length; i++) {
+          var face = facesWithZ[i].face;
+          var depth = facesWithZ[i].z;
+
+          // Simple depth-based shading
+          var shade = Math.max(0.2, Math.min(1, 1 - (depth - 3) / 8));
+          var r = Math.round(rgb[0] * shade);
+          var g = Math.round(rgb[1] * shade);
+          var b = Math.round(rgb[2] * shade);
+
+          ctx.fillStyle = 'rgb(' + r + ',' + g + ',' + b + ')';
+          ctx.strokeStyle = 'rgba(' + rgb[0] + ',' + rgb[1] + ',' + rgb[2] + ',0.3)';
+          ctx.lineWidth = 0.5;
+
+          ctx.beginPath();
+          ctx.moveTo(projected[face[0]][0], projected[face[0]][1]);
+          for (var j = 1; j < face.length; j++) {
+            ctx.lineTo(projected[face[j]][0], projected[face[j]][1]);
+          }
+          ctx.closePath();
+          ctx.fill();
+          ctx.stroke();
+        }
+      } else {
+        // Wireframe mode
+        ctx.strokeStyle = modelColor;
+        ctx.lineWidth = 1;
+        var edges = model.edges;
+        for (var i = 0; i < edges.length; i++) {
+          var a = projected[edges[i][0]];
+          var b = projected[edges[i][1]];
+          ctx.beginPath();
+          ctx.moveTo(a[0], a[1]);
+          ctx.lineTo(b[0], b[1]);
+          ctx.stroke();
+        }
+      }
+
+      if (rotating) {
+        angleY += 0.008;
+      }
+
+      requestAnimationFrame(draw);
+    }
+
+    draw();
+
+    // === UI Interactions ===
+
+    // Model selection
+    var sampleBtns = document.querySelectorAll('.tv-sample-btn');
+    for (var i = 0; i < sampleBtns.length; i++) {
+      sampleBtns[i].addEventListener('click', function() {
+        for (var j = 0; j < sampleBtns.length; j++) {
+          sampleBtns[j].className = 'tv-sample-btn';
+        }
+        this.className = 'tv-sample-btn selected';
+        currentModel = this.getAttribute('data-model');
+        model = getModel(currentModel);
+        document.getElementById('info-name').textContent = model.name;
+        document.getElementById('info-verts').textContent = model.vertices.length;
+      });
+    }
+
+    // Color selection
+    var swatches = document.querySelectorAll('.tv-color-swatch');
+    for (var i = 0; i < swatches.length; i++) {
+      swatches[i].addEventListener('click', function() {
+        for (var j = 0; j < swatches.length; j++) {
+          swatches[j].className = 'tv-color-swatch';
+        }
+        this.className = 'tv-color-swatch selected';
+        modelColor = this.getAttribute('data-color');
+      });
+    }
+
+    // Toggle buttons
+    document.getElementById('btn-rotate').addEventListener('click', function() {
+      rotating = !rotating;
+      this.className = rotating ? 'tv-btn active' : 'tv-btn';
+    });
+
+    document.getElementById('btn-wireframe').addEventListener('click', function() {
+      wireframeMode = !wireframeMode;
+      this.className = wireframeMode ? 'tv-btn active' : 'tv-btn';
+    });
+
+    document.getElementById('btn-grid').addEventListener('click', function() {
+      showGrid = !showGrid;
+      this.className = showGrid ? 'tv-btn active' : 'tv-btn';
+    });
+
+    document.getElementById('btn-reset').addEventListener('click', function() {
+      angleX = 0.3;
+      angleY = 0;
+    });
+
+    // Update initial stats
+    document.getElementById('info-verts').textContent = model.vertices.length;
+  </script>
+</body>
+</html>
